@@ -1,4 +1,4 @@
-# govgov-473916 プロジェクト復元ガイド
+# <YOUR_PROJECT_ID> プロジェクト復元ガイド
 
 削除日: 2026-01-15
 
@@ -18,17 +18,17 @@
 ### Cloud Storage バケット (11個)
 | バケット名 | 復元期限 | 復元コマンド |
 |-----------|---------|-------------|
-| govgov-473916-data | 7日以内 (2026-01-22まで) | Soft Delete から復元可能 |
-| govgov-473916-estat-data | 7日以内 | Soft Delete から復元可能 |
-| govgov-473916_cloudbuild | 7日以内 | 再作成で対応 |
-| govgov-state-335117605715 | 7日以内 | Soft Delete から復元可能 |
+| <YOUR_PROJECT_ID>-data | 7日以内 (2026-01-22まで) | Soft Delete から復元可能 |
+| <YOUR_PROJECT_ID>-estat-data | 7日以内 | Soft Delete から復元可能 |
+| <YOUR_PROJECT_ID>_cloudbuild | 7日以内 | 再作成で対応 |
+| govgov-state-<SERVICE_ACCOUNT_NUMBER> | 7日以内 | Soft Delete から復元可能 |
 | rsdata_govgov | 7日以内 | Soft Delete から復元可能 |
-| run-sources-govgov-473916-asia-northeast1 | 7日以内 | 再作成で対応 |
-| 335117605715_asia_northeast1_import | 7日以内 | 再作成で対応 |
-| 335117605715_asia_northeast1_import_custom | 7日以内 | 再作成で対応 |
-| 335117605715_asia_northeast1_import_document | 7日以内 | 再作成で対応 |
-| gcf-v2-sources-335117605715-asia-northeast1 | 7日以内 | 再作成で対応 |
-| gcf-v2-uploads-335117605715.asia-northeast1.cloudfunctions.appspot.com | 7日以内 | 再作成で対応 |
+| run-sources-<YOUR_PROJECT_ID>-asia-northeast1 | 7日以内 | 再作成で対応 |
+| <SERVICE_ACCOUNT_NUMBER>_asia_northeast1_import | 7日以内 | 再作成で対応 |
+| <SERVICE_ACCOUNT_NUMBER>_asia_northeast1_import_custom | 7日以内 | 再作成で対応 |
+| <SERVICE_ACCOUNT_NUMBER>_asia_northeast1_import_document | 7日以内 | 再作成で対応 |
+| gcf-v2-sources-<SERVICE_ACCOUNT_NUMBER>-asia-northeast1 | 7日以内 | 再作成で対応 |
+| gcf-v2-uploads-<SERVICE_ACCOUNT_NUMBER>.asia-northeast1.cloudfunctions.appspot.com | 7日以内 | 再作成で対応 |
 
 ### Vertex AI RAG Corpus (1つ)
 | 名前 | リージョン | 復元方法 |
@@ -45,16 +45,16 @@
 
 ```bash
 # プロジェクトを設定
-gcloud config set project govgov-473916
+gcloud config set project <YOUR_PROJECT_ID>
 
 # Soft Delete されたバケットを一覧表示
 gcloud storage ls --soft-deleted
 
 # 特定のバケットを復元
-gcloud storage buckets restore gs://govgov-473916-data
+gcloud storage buckets restore gs://<YOUR_PROJECT_ID>-data
 
 # バケット内のオブジェクトを復元
-gcloud storage objects restore "gs://govgov-473916-data/**" --all-versions
+gcloud storage objects restore "gs://<YOUR_PROJECT_ID>-data/**" --all-versions
 ```
 
 ### 2. Cloud Run サービスの再デプロイ
@@ -65,7 +65,7 @@ cd govgovbot
 gcloud run deploy factcheck-bot \
   --source . \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --allow-unauthenticated
 ```
 
@@ -75,7 +75,7 @@ cd govgovweb
 gcloud run deploy govgovweb \
   --source . \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --allow-unauthenticated
 ```
 
@@ -86,14 +86,14 @@ gcloud run deploy govgovweb \
 curl -X POST \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/json" \
-  "https://us-east4-aiplatform.googleapis.com/v1/projects/govgov-473916/locations/us-east4/ragCorpora" \
+  "https://us-east4-aiplatform.googleapis.com/v1/projects/<YOUR_PROJECT_ID>/locations/us-east4/ragCorpora" \
   -d '{
     "displayName": "corpus_govgov",
     "vectorDbConfig": {
       "ragManagedDb": {},
       "ragEmbeddingModelConfig": {
         "vertexPredictionEndpoint": {
-          "endpoint": "projects/govgov-473916/locations/us-east4/publishers/google/models/text-multilingual-embedding-002"
+          "endpoint": "projects/<YOUR_PROJECT_ID>/locations/us-east4/publishers/google/models/text-multilingual-embedding-002"
         }
       }
     }
@@ -107,16 +107,16 @@ curl -X POST \
 RAG Corpus にデータを再インデックスするには:
 
 ```bash
-# govgov-473916-data バケットを復元後
+# <YOUR_PROJECT_ID>-data バケットを復元後
 # RAG にファイルをインポート
 curl -X POST \
   -H "Authorization: Bearer $(gcloud auth print-access-token)" \
   -H "Content-Type: application/json" \
-  "https://us-east4-aiplatform.googleapis.com/v1/projects/govgov-473916/locations/us-east4/ragCorpora/{NEW_CORPUS_ID}/ragFiles:import" \
+  "https://us-east4-aiplatform.googleapis.com/v1/projects/<YOUR_PROJECT_ID>/locations/us-east4/ragCorpora/{NEW_CORPUS_ID}/ragFiles:import" \
   -d '{
     "importRagFilesConfig": {
       "gcsSource": {
-        "uris": ["gs://govgov-473916-data/**"]
+        "uris": ["gs://<YOUR_PROJECT_ID>-data/**"]
       }
     }
   }'
@@ -129,14 +129,14 @@ curl -X POST \
 復元後、`govgovbot/.env` を以下のように更新してください:
 
 ```env
-PROJECT_ID=govgov-473916
+PROJECT_ID=<YOUR_PROJECT_ID>
 LOCATION=global
-BUCKET_NAME=govgov-473916-data
+BUCKET_NAME=<YOUR_PROJECT_ID>-data
 
 # Vertex AI RAG Engine (新しいCorpus ID で更新)
 RAG_CORPUS_ID=<新しいCORPUS_ID>
 RAG_LOCATION=us-east4
-RAG_CORPUS_RESOURCE_NAME=projects/govgov-473916/locations/us-east4/ragCorpora/<新しいCORPUS_ID>
+RAG_CORPUS_RESOURCE_NAME=projects/<YOUR_PROJECT_ID>/locations/us-east4/ragCorpora/<新しいCORPUS_ID>
 MODEL_LOCATION=global
 MODEL_NAME=gemini-2.5-flash
 TEMPERATURE=0.7
@@ -144,7 +144,7 @@ MAX_OUTPUT_TOKENS=8192
 SIMILARITY_TOP_K=10
 
 # Vertex AI Search
-VERTEX_AI_SEARCH_DATA_STORE_ID=datastore-govgov_1759561195262
+VERTEX_AI_SEARCH_DATA_STORE_ID=<YOUR_DATA_STORE_ID>
 VERTEX_AI_SEARCH_LOCATION=global
 
 # gRPC設定
@@ -166,5 +166,5 @@ GRPC_VERBOSITY=ERROR
 ## 問い合わせ
 
 復元に問題がある場合は、Google Cloud Console から確認してください:
-- https://console.cloud.google.com/run?project=govgov-473916
-- https://console.cloud.google.com/storage/browser?project=govgov-473916
+- https://console.cloud.google.com/run?project=<YOUR_PROJECT_ID>
+- https://console.cloud.google.com/storage/browser?project=<YOUR_PROJECT_ID>

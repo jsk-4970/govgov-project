@@ -132,7 +132,7 @@ VERTEX_AI_RETRY_MULTIPLIER=2    # バックオフ倍率
 #### 1.1 ローカル開発環境
 
 ```bash
-cd /Users/aburi/Desktop/govgov/govgovbot
+cd /path/to/govgovbot
 cp .env.example .env  # まだ.envがない場合
 
 # .envファイルを編集
@@ -157,16 +157,16 @@ VERTEX_AI_RETRY_MULTIPLIER=2
 **方法A: gcloud コマンド**
 
 ```bash
-~/google-cloud-sdk/bin/gcloud run services update factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services update <YOUR_SERVICE_NAME> \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --update-env-vars RAG_LOCATION=global
 ```
 
 **方法B: Google Cloud Console**
 
 1. [Cloud Run Console](https://console.cloud.google.com/run) にアクセス
-2. `factcheck-bot` サービスを選択
+2. `<YOUR_SERVICE_NAME>` サービスを選択
 3. 「新しいリビジョンを編集してデプロイ」をクリック
 4. 「変数とシークレット」タブで環境変数を追加/更新:
    - `RAG_LOCATION` = `global`
@@ -181,7 +181,7 @@ VERTEX_AI_RETRY_MULTIPLIER=2
 #### 2.1 ローカルテスト
 
 ```bash
-cd /Users/aburi/Desktop/govgov/govgovbot
+cd /path/to/govgovbot
 
 # 依存関係の確認（既にインストール済みのはず）
 pip install -r requirements.txt
@@ -205,19 +205,19 @@ print(f'Model Name: {config.rag_config.model_name}')
 **既存のDockerfileを使用:**
 
 ```bash
-cd /Users/aburi/Desktop/govgov/govgovbot
+cd /path/to/govgovbot
 
 # イメージのビルド
-docker build -t gcr.io/govgov-473916/factcheck-bot:latest .
+docker build -t gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest .
 
 # イメージのプッシュ
-docker push gcr.io/govgov-473916/factcheck-bot:latest
+docker push gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest
 
 # Cloud Runへデプロイ
-~/google-cloud-sdk/bin/gcloud run deploy factcheck-bot \
-  --image gcr.io/govgov-473916/factcheck-bot:latest \
+~/google-cloud-sdk/bin/gcloud run deploy <YOUR_SERVICE_NAME> \
+  --image gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --platform managed \
   --update-env-vars RAG_LOCATION=global
 ```
@@ -226,13 +226,13 @@ docker push gcr.io/govgov-473916/factcheck-bot:latest
 
 ```bash
 ~/google-cloud-sdk/bin/gcloud builds submit \
-  --tag gcr.io/govgov-473916/factcheck-bot:latest \
-  --project govgov-473916
+  --tag gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest \
+  --project <YOUR_PROJECT_ID>
 
-~/google-cloud-sdk/bin/gcloud run deploy factcheck-bot \
-  --image gcr.io/govgov-473916/factcheck-bot:latest \
+~/google-cloud-sdk/bin/gcloud run deploy <YOUR_SERVICE_NAME> \
+  --image gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest \
   --region asia-northeast1 \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 ### ステップ3: デプロイ後の確認
@@ -240,9 +240,9 @@ docker push gcr.io/govgov-473916/factcheck-bot:latest
 #### 3.1 環境変数の確認
 
 ```bash
-~/google-cloud-sdk/bin/gcloud run services describe factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services describe <YOUR_SERVICE_NAME> \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --format="value(spec.template.spec.containers[0].env)"
 ```
 
@@ -256,10 +256,10 @@ RAG_LOCATION=global
 ```bash
 # リアルタイムログ監視
 ~/google-cloud-sdk/bin/gcloud logging read \
-  "resource.type=cloud_run_revision AND resource.labels.service_name=factcheck-bot" \
+  "resource.type=cloud_run_revision AND resource.labels.service_name=<YOUR_SERVICE_NAME>" \
   --limit 50 \
   --format json \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --freshness=1h
 ```
 
@@ -276,11 +276,11 @@ RAG_LOCATION=global
 # 429エラーの発生件数を確認
 ~/google-cloud-sdk/bin/gcloud logging read \
   'resource.type=cloud_run_revision
-   AND resource.labels.service_name=factcheck-bot
+   AND resource.labels.service_name=<YOUR_SERVICE_NAME>
    AND (textPayload=~"429" OR textPayload=~"QUOTA_EXHAUSTED")' \
   --limit 100 \
   --format="value(timestamp,textPayload)" \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --freshness=24h
 ```
 
@@ -290,11 +290,11 @@ RAG_LOCATION=global
 # フォールバックが発動したケースを確認
 ~/google-cloud-sdk/bin/gcloud logging read \
   'resource.type=cloud_run_revision
-   AND resource.labels.service_name=factcheck-bot
+   AND resource.labels.service_name=<YOUR_SERVICE_NAME>
    AND textPayload=~"falling back to Vertex AI Search"' \
   --limit 50 \
   --format json \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --freshness=24h
 ```
 
@@ -331,27 +331,27 @@ RAG_LOCATION=global
 
 **確認コマンド:**
 ```bash
-~/google-cloud-sdk/bin/gcloud run services describe factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services describe <YOUR_SERVICE_NAME> \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --format yaml | grep -A 5 "env:"
 ```
 
 **解決策:**
 ```bash
 # 強制的に新しいリビジョンをデプロイ
-~/google-cloud-sdk/bin/gcloud run deploy factcheck-bot \
-  --image gcr.io/govgov-473916/factcheck-bot:latest \
+~/google-cloud-sdk/bin/gcloud run deploy <YOUR_SERVICE_NAME> \
+  --image gcr.io/<YOUR_PROJECT_ID>/<YOUR_SERVICE_NAME>:latest \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --set-env-vars RAG_LOCATION=global \
   --no-traffic  # まずトラフィックを流さずにテスト
 
 # テスト確認後、トラフィックを切り替え
-~/google-cloud-sdk/bin/gcloud run services update-traffic factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services update-traffic <YOUR_SERVICE_NAME> \
   --to-latest \
   --region asia-northeast1 \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 ### 問題2: 429エラーが依然として多発
@@ -362,11 +362,11 @@ RAG_LOCATION=global
 ```bash
 ~/google-cloud-sdk/bin/gcloud logging read \
   'resource.type=cloud_run_revision
-   AND resource.labels.service_name=factcheck-bot
+   AND resource.labels.service_name=<YOUR_SERVICE_NAME>
    AND textPayload=~"VertexAIRAGClient initialized"' \
   --limit 5 \
   --format="value(textPayload)" \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 期待: `model_location=global` が含まれること
@@ -375,11 +375,11 @@ RAG_LOCATION=global
 ```bash
 ~/google-cloud-sdk/bin/gcloud logging read \
   'resource.type=cloud_run_revision
-   AND resource.labels.service_name=factcheck-bot
+   AND resource.labels.service_name=<YOUR_SERVICE_NAME>
    AND severity>=WARNING' \
   --limit 50 \
   --format json \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 期待: `RetryError` や `attempt X/5` のようなメッセージ
@@ -388,7 +388,7 @@ RAG_LOCATION=global
 ```bash
 # Vertex AI APIのクォータを確認
 ~/google-cloud-sdk/bin/gcloud compute project-info describe \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --format="value(quotas)"
 ```
 
@@ -405,11 +405,11 @@ RAG_LOCATION=global
 # エラーメッセージのフォーマット確認
 ~/google-cloud-sdk/bin/gcloud logging read \
   'resource.type=cloud_run_revision
-   AND resource.labels.service_name=factcheck-bot
+   AND resource.labels.service_name=<YOUR_SERVICE_NAME>
    AND textPayload=~"RAG_REPLY_ERROR"' \
   --limit 10 \
   --format="value(textPayload)" \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 **期待される出力例:**
@@ -438,9 +438,9 @@ except Exception as e:
 ### 環境変数のみロールバック
 
 ```bash
-~/google-cloud-sdk/bin/gcloud run services update factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services update <YOUR_SERVICE_NAME> \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --update-env-vars RAG_LOCATION=us-central1
 ```
 
@@ -449,15 +449,15 @@ except Exception as e:
 ```bash
 # 以前のリビジョンを確認
 ~/google-cloud-sdk/bin/gcloud run revisions list \
-  --service factcheck-bot \
+  --service <YOUR_SERVICE_NAME> \
   --region asia-northeast1 \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 
 # 特定のリビジョンにロールバック
-~/google-cloud-sdk/bin/gcloud run services update-traffic factcheck-bot \
+~/google-cloud-sdk/bin/gcloud run services update-traffic <YOUR_SERVICE_NAME> \
   --to-revisions <REVISION_NAME>=100 \
   --region asia-northeast1 \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
 ---
@@ -469,21 +469,21 @@ except Exception as e:
 #### 1. 429エラー発生率
 ```
 resource.type="cloud_run_revision"
-resource.labels.service_name="factcheck-bot"
+resource.labels.service_name="<YOUR_SERVICE_NAME>"
 (textPayload=~"429" OR textPayload=~"QUOTA_EXHAUSTED" OR textPayload=~"RATE_LIMIT")
 ```
 
 #### 2. フォールバック発動回数
 ```
 resource.type="cloud_run_revision"
-resource.labels.service_name="factcheck-bot"
+resource.labels.service_name="<YOUR_SERVICE_NAME>"
 textPayload=~"falling back to Vertex AI Search"
 ```
 
 #### 3. RAGクエリ成功率
 ```
 resource.type="cloud_run_revision"
-resource.labels.service_name="factcheck-bot"
+resource.labels.service_name="<YOUR_SERVICE_NAME>"
 (textPayload=~"RAG query completed" OR textPayload=~"RAG_REPLY_ERROR")
 ```
 

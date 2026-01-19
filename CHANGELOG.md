@@ -44,24 +44,24 @@
 ```bash
 # バックエンド (govgov-bot)
 gcloud run deploy govgov-bot \
-  --source /Users/aburi/Desktop/govgov/govgovbot \
+  --source /path/to/govgovbot \
   --platform managed \
   --region asia-northeast1 \
   --memory 2Gi \
-  --project govgov-473916
+  --project <YOUR_PROJECT_ID>
 ```
 
-**デプロイURL**: https://govgov-bot-335117605715.asia-northeast1.run.app
+**デプロイURL**: `https://<YOUR_SERVICE_NAME>-<SERVICE_ACCOUNT_NUMBER>.<REGION>.run.app`
 
 ### テスト結果
 
 ```bash
 # ヘルスチェック
-curl https://govgov-bot-335117605715.asia-northeast1.run.app/
+curl https://<YOUR_SERVICE_URL>/
 # {"ok":true,"root":true}
 
 # API テスト
-curl -X POST https://govgov-bot-335117605715.asia-northeast1.run.app/api/ask \
+curl -X POST https://<YOUR_SERVICE_URL>/api/ask \
   -H "Content-Type: application/json" \
   -d '{"question":"こども家庭庁の予算について教えてください"}'
 # data: ご連絡ありがとうございます。現在ベータ運用中です...

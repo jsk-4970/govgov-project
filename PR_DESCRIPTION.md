@@ -104,7 +104,7 @@ VERTEX_AI_RETRY_MULTIPLIER=2    # バックオフ倍率
 ```bash
 gcloud run services update factcheck-bot \
   --region asia-northeast1 \
-  --project govgov-473916 \
+  --project <YOUR_PROJECT_ID> \
   --update-env-vars RAG_LOCATION=us-central1
 ```
 
@@ -120,8 +120,4 @@ gcloud run services update factcheck-bot \
 
 **PR作成手順:**
 
-GitHubでプルリクエストを作成するには、以下のURLにアクセスしてください:
-
-https://github.com/HKobayashi2003/govgov/pull/new/feature/fix-429-errors
-
-上記の内容をPR descriptionにコピー&ペーストしてください。
+GitHubでプルリクエストを作成するには、リポジトリの「Pull requests」タブから新しいPRを作成し、上記の内容をPR descriptionにコピー&ペーストしてください。

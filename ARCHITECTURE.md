@@ -338,7 +338,7 @@ graph TB
 - Max Output Tokens: 2048
 
 **RAG Retrieval:**
-- RAG Corpus: `projects/govgov-473916/locations/us-east4/ragCorpora/{CORPUS_ID}`
+- RAG Corpus: `projects/<YOUR_PROJECT_ID>/locations/us-east4/ragCorpora/<CORPUS_ID>`
 - Similarity Top K: 5
 - Vector Store: Vertex RAG Store
 
@@ -353,7 +353,7 @@ graph TB
 
 **データソース:**
 - 行政事業レビューデータ（政府予算・事業評価情報）
-- GCS Bucket: `govgov-473916-data/data/review-data`
+- GCS Bucket: `<YOUR_PROJECT_ID>-data/data/review-data`
 
 ---
 
@@ -433,11 +433,11 @@ govgov/
 両システムはGoogle Cloud Runにデプロイされています：
 
 1. **govgovbot** → Cloud Run (Flask)
-   - エンドポイント: `https://govgovbot-xxxxx.run.app`
+   - エンドポイント: `https://govgovbot-<SERVICE_ACCOUNT_NUMBER>.<REGION>.run.app`
    - 定期タスク: Cloud Scheduler経由
 
 2. **govgovweb** → Cloud Run (Next.js)
-   - エンドポイント: `https://govgovweb-xxxxx.run.app`
+   - エンドポイント: `https://govgovweb-<SERVICE_ACCOUNT_NUMBER>.<REGION>.run.app`
    - 環境変数: `BACKEND_API_URL` でgovgovbot URLを指定
 
 **デプロイ順序:**
