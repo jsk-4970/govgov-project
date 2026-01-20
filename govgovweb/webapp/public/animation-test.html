@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animation Test - govgov</title>
+  <style>
+    :root {
+      --medium-blue: #328DCA;
+      --light-blue: #6AD3DD;
+      --dark-blue: #003B71;
+      --text-black: #1A1A1A;
+      --background-white: #FFFFFF;
+      --border-gray: #E5E5E5;
+      --text-gray: #888888;
+    }
+
+    body {
+      background-color: #f9f9f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      padding: 40px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: var(--text-black);
+      margin-bottom: 40px;
+    }
+
+    .test-section {
+      margin-bottom: 60px;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .test-section h2 {
+      color: var(--medium-blue);
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+
+    /* Enhanced loading icon bounce with rotation */
+    @keyframes iconBounce {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+      25% {
+        transform: translateY(-8px) rotate(-5deg) scale(1.05);
+      }
+      50% {
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+      75% {
+        transform: translateY(-8px) rotate(5deg) scale(1.05);
+      }
+    }
+
+    .loading-icon-bounce {
+      animation: iconBounce 1.6s ease-in-out infinite;
+      display: inline-block;
+      transform-origin: center;
+      filter: drop-shadow(0 4px 8px rgba(43, 159, 217, 0.3));
+    }
+
+    /* Thinking dots animation */
+    @keyframes thinking {
+      0% {
+        transform: scale(0.4) translateY(0);
+        opacity: 0.3;
+      }
+      20% {
+        transform: scale(1.2) translateY(-8px);
+        opacity: 1;
+      }
+      40% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0.4) translateY(0);
+        opacity: 0.3;
+      }
+    }
+
+    .thinking-dot {
+      display: inline-block;
+      animation: thinking 1.8s ease-in-out infinite;
+      transform-origin: center;
+    }
+
+    .thinking-dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    /* Loading message text transition */
+    @keyframes messageTransition {
+      0% {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      10% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      90% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+    }
+
+    .loading-message-text {
+      display: inline-block;
+      animation: messageTransition 2s ease-in-out infinite;
+    }
+
+    .loading-box {
+      padding: 1.5rem 2rem;
+      borderRadius: 20px;
+      backgroundColor: #F5F5F5;
+      boxShadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .flex {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .flex-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 govgov Animation Test</h1>
+
+    <div class="test-section">
+      <h2>1. Icon Bounce Animation (単体)</h2>
+      <img
+        src="/govgov-icon.png"
+        alt="govgov"
+        class="loading-icon-bounce"
+        style="width: 56px; height: 56px;"
+      />
+      <p style="margin-top: 20px; color: var(--text-gray);">
+        アイコンが上下にバウンドしながら左右に回転します
+      </p>
+    </div>
+
+    <div class="test-section">
+      <h2>2. Thinking Dots Animation (単体)</h2>
+      <div class="flex">
+        <div class="thinking-dot" style="width: 12px; height: 12px; borderRadius: 50%; backgroundColor: #2B9FD9; boxShadow: 0 0 6px rgba(43, 159, 217, 0.6); border-radius: 50%; background-color: #2B9FD9;"></div>
+        <div class="thinking-dot" style="width: 12px; height: 12px; borderRadius: 50%; backgroundColor: #2B9FD9; boxShadow: 0 0 6px rgba(43, 159, 217, 0.6); border-radius: 50%; background-color: #2B9FD9;"></div>
+        <div class="thinking-dot" style="width: 12px; height: 12px; borderRadius: 50%; backgroundColor: #2B9FD9; boxShadow: 0 0 6px rgba(43, 159, 217, 0.6); border-radius: 50%; background-color: #2B9FD9;"></div>
+      </div>
+      <p style="margin-top: 20px; color: var(--text-gray);">
+        3つのドットが順番に跳ねます
+      </p>
+    </div>
+
+    <div class="test-section">
+      <h2>3. Message Text Transition (単体)</h2>
+      <span class="loading-message-text" style="font-size: 1rem; color: var(--text-black); font-weight: 600;">
+        govgovが情報を取得しています
+      </span>
+      <p style="margin-top: 20px; color: var(--text-gray);">
+        テキストが上下にフェードイン/アウトします（2秒サイクル）
+      </p>
+    </div>
+
+    <div class="test-section">
+      <h2>4. Complete Loading State (統合)</h2>
+      <div style="padding: 1.5rem 2rem; border-radius: 20px; background-color: #F5F5F5; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 16px;">
+        <img
+          src="/govgov-icon.png"
+          alt="govgov"
+          class="loading-icon-bounce"
+          style="width: 56px; height: 56px;"
+        />
+        <div class="flex-col">
+          <span class="loading-message-text" style="font-size: 1rem; color: var(--text-black); font-weight: 600;">
+            govgovが情報を取得しています
+          </span>
+          <div class="flex">
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 20px; color: var(--text-gray);">
+        すべてのアニメーションが統合された完全な表示
+      </p>
+    </div>
+
+    <div class="test-section">
+      <h2>5. Cycling Messages Demo</h2>
+      <div style="padding: 1.5rem 2rem; border-radius: 20px; background-color: #F5F5F5; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 16px;">
+        <img
+          src="/govgov-icon.png"
+          alt="govgov"
+          class="loading-icon-bounce"
+          style="width: 56px; height: 56px;"
+        />
+        <div class="flex-col">
+          <span id="cycling-message" class="loading-message-text" style="font-size: 1rem; color: var(--text-black); font-weight: 600;">
+            govgovが情報を取得しています
+          </span>
+          <div class="flex">
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+            <div class="thinking-dot" style="width: 12px; height: 12px; border-radius: 50%; background-color: #2B9FD9; box-shadow: 0 0 6px rgba(43, 159, 217, 0.6);"></div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 20px; color: var(--text-gray);">
+        メッセージが2秒ごとに自動的に切り替わります
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Cycle through messages
+    const messages = [
+      'govgovが情報を取得しています',
+      'govgovがドキュメントを分析しています',
+      'govgovが回答を準備しています',
+      'govgovが情報源を確認しています'
+    ];
+    let index = 0;
+
+    setInterval(() => {
+      index = (index + 1) % messages.length;
+      const element = document.getElementById('cycling-message');
+      if (element) {
+        element.textContent = messages[index];
+      }
+    }, 2000);
+  </script>
+</body>
+</html>

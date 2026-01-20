@@ -1,0 +1,29 @@
+# Google Cloud
+google-cloud-aiplatform>=1.38.0
+google-cloud-storage
+google-cloud-secret-manager
+google-cloud-discoveryengine
+google-cloud-firestore
+
+# Data handling
+pandas
+
+# .env file handling
+python-dotenv
+
+# Twitter API (Phase 2)
+tweepy
+
+# Web framework (Phase 2)
+flask
+gunicorn
+
+# HTTP requests
+requests
+
+# Retry logic
+tenacity
+
+# Testing
+pytest
+pytest-mock

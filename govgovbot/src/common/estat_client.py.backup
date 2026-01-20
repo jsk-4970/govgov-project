@@ -1,0 +1,301 @@
+"""e-Stat API クライアント
+
+政府統計の総合窓口（e-Stat）APIから統計データを取得します。
+API仕様: https://www.e-stat.go.jp/api/api-info/e-stat-manual3-0
+"""
+
+import json
+import logging
+import time
+from typing import Any, Optional
+
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+logger = logging.getLogger(__name__)
+
+
+class EStatAPIError(Exception):
+    """e-Stat API関連のエラー"""
+
+    pass
+
+
+class EStatClient:
+    """e-Stat APIクライアント"""
+
+    BASE_URL = "https://api.e-stat.go.jp/rest/3.0/app"
+
+    def __init__(self, app_id: str, request_interval: float = 1.0) -> None:
+        """クライアントを初期化する
+
+        Args:
+            app_id: e-Stat APIアプリケーションID
+            request_interval: APIリクエスト間の待機時間（秒）
+        """
+        self.app_id = app_id
+        self.request_interval = request_interval
+        self.session = requests.Session()
+        logger.info("EStatClient initialized")
+
+    def _wait_for_rate_limit(self) -> None:
+        """レート制限を考慮した待機処理"""
+        time.sleep(self.request_interval)
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+    )
+    def _make_request(
+        self, endpoint: str, params: dict[str, Any], timeout: int = 30
+    ) -> dict[str, Any]:
+        """APIリクエストを実行する
+
+        Args:
+            endpoint: APIエンドポイント
+            params: リクエストパラメータ
+            timeout: タイムアウト時間（秒）
+
+        Returns:
+            APIレスポンス（JSON）
+
+        Raises:
+            EStatAPIError: APIエラーが発生した場合
+        """
+        url = f"{self.BASE_URL}/json/{endpoint}"
+        params["appId"] = self.app_id
+
+        try:
+            logger.debug(f"Making request to {endpoint} with params: {params}")
+            response = self.session.get(url, params=params, timeout=timeout)
+            logger.info(f"Request URL: {response.url}")
+            response.raise_for_status()
+
+            data = response.json()
+
+            # エラーチェック
+            if "GET_STATS_LIST" in data:
+                result = data["GET_STATS_LIST"]["RESULT"]
+            elif "GET_STATS_DATA" in data:
+                result = data["GET_STATS_DATA"]["RESULT"]
+            else:
+                raise EStatAPIError(f"Unexpected API response structure: {data}")
+
+            status = int(result.get("STATUS", 999))
+            error_msg = result.get("ERROR_MSG", "Unknown error")
+
+            if status >= 100:
+                raise EStatAPIError(f"API error (status={status}): {error_msg}")
+
+            logger.debug(f"Request successful: {endpoint}")
+            return data
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {str(e)}")
+            raise EStatAPIError(f"Request failed: {str(e)}") from e
+        except (KeyError, ValueError) as e:
+            logger.error(f"Failed to parse response: {str(e)}")
+            raise EStatAPIError(f"Failed to parse response: {str(e)}") from e
+
+    def get_stats_list(
+        self,
+        start_position: int = 1,
+        limit: int = 10000,
+        search_kind: int = 1,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """統計表情報を取得する
+
+        Args:
+            start_position: データ取得開始位置
+            limit: 取得件数上限
+            search_kind: データ種別（1: 統計情報, 2: 小地域・地域メッシュ）
+            **kwargs: その他のオプションパラメータ
+                - surveyYears: 調査年月
+                - statsCode: 政府統計コード
+                - searchWord: 検索キーワード
+
+        Returns:
+            統計表情報のリスト
+
+        Raises:
+            EStatAPIError: API呼び出しに失敗した場合
+        """
+        params = {
+            "startPosition": start_position,
+            "limit": limit,
+            "searchKind": search_kind,
+            **kwargs,
+        }
+
+        logger.info(
+            f"Getting stats list (startPosition={start_position}, limit={limit})"
+        )
+        self._wait_for_rate_limit()
+        return self._make_request("getStatsList", params)
+
+    def get_all_stats_ids(
+        self, search_kind: int = 1, limit_per_request: int = 10000, **kwargs: Any
+    ) -> list[str]:
+        """全ての統計表IDを取得する（ページネーション対応）
+
+        Args:
+            search_kind: データ種別
+            limit_per_request: 1リクエストあたりの取得件数
+            **kwargs: その他のフィルタパラメータ
+
+        Returns:
+            統計表IDのリスト
+
+        Raises:
+            EStatAPIError: API呼び出しに失敗した場合
+        """
+        all_stats_ids: list[str] = []
+        start_position = 1
+
+        logger.info("Starting to fetch all stats IDs")
+
+        while True:
+            response = self.get_stats_list(
+                start_position=start_position,
+                limit=limit_per_request,
+                search_kind=search_kind,
+                **kwargs,
+            )
+
+            # 統計表リストを抽出
+            stats_list_data = response["GET_STATS_LIST"].get("DATALIST_INF")
+
+            if not stats_list_data:
+                logger.info("No more data to fetch")
+                break
+
+            # TABLE_INFが単一の辞書の場合とリストの場合を処理
+            table_inf = stats_list_data.get("TABLE_INF", [])
+            if isinstance(table_inf, dict):
+                table_inf = [table_inf]
+
+            # 統計表IDを抽出
+            for table in table_inf:
+                stats_id = table.get("@id")
+                if stats_id:
+                    all_stats_ids.append(stats_id)
+
+            logger.info(
+                f"Fetched {len(table_inf)} stats IDs (total: {len(all_stats_ids)})"
+            )
+
+            # 次のページがあるかチェック
+            next_key = stats_list_data.get("NEXT_KEY")
+            if not next_key:
+                logger.info("Reached end of data")
+                break
+
+            start_position = int(next_key)
+
+        logger.info(f"Total stats IDs fetched: {len(all_stats_ids)}")
+        return all_stats_ids
+
+    def get_stats_data(
+        self,
+        stats_data_id: str,
+        meta_get_flg: str = "N",
+        cnt_get_flg: str = "N",
+        section_header_flg: str = "2",
+        start_position: int = 1,
+        limit: int = 100000,
+    ) -> dict[str, Any]:
+        """統計データを取得する
+
+        Args:
+            stats_data_id: 統計表ID
+            meta_get_flg: メタ情報取得フラグ（Y/N、デフォルトN）
+            cnt_get_flg: データ件数取得フラグ（Y/N、デフォルトN）
+            section_header_flg: セクションヘッダフラグ（1/2、デフォルト2）
+            start_position: データ取得開始位置
+            limit: 取得件数上限
+
+        Returns:
+            統計データ
+
+        Raises:
+            EStatAPIError: API呼び出しに失敗した場合
+        """
+        params = {
+            "statsDataId": stats_data_id,
+            "lang": "J",
+            "metaGetFlg": meta_get_flg,
+            "cntGetFlg": cnt_get_flg,
+            "sectionHeaderFlg": section_header_flg,
+            "startPosition": start_position,
+            "limit": limit,
+        }
+
+        logger.info(f"Getting stats data: {stats_data_id}")
+        self._wait_for_rate_limit()
+        return self._make_request("getStatsData", params)
+
+    def extract_values_from_stats_data(
+        self, stats_data: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        """統計データからVALUEレコードを抽出する
+
+        Args:
+            stats_data: getStatsDataのレスポンス
+
+        Returns:
+            VALUEレコードのリスト
+
+        Raises:
+            EStatAPIError: データ構造が想定外の場合
+        """
+        try:
+            statistical_data = stats_data["GET_STATS_DATA"]["STATISTICAL_DATA"]
+
+            # DATA_INFが存在するかチェック
+            if "DATA_INF" not in statistical_data:
+                logger.warning("No DATA_INF found in response")
+                return []
+
+            data_inf = statistical_data["DATA_INF"]
+
+            # DATA_INFが文字列の場合（データなし）
+            if isinstance(data_inf, str):
+                logger.warning(f"DATA_INF is a string (no data): {data_inf}")
+                return []
+
+            # VALUEを取得
+            if "VALUE" not in data_inf:
+                logger.warning("No VALUE found in DATA_INF")
+                return []
+
+            values = data_inf["VALUE"]
+
+            # 単一の辞書の場合はリストに変換
+            if isinstance(values, dict):
+                values = [values]
+
+            # リストでない場合は空リスト
+            if not isinstance(values, list):
+                logger.warning(f"VALUE is not a list: {type(values)}")
+                return []
+
+            logger.debug(f"Extracted {len(values)} value records")
+            return values
+
+        except (KeyError, TypeError) as e:
+            logger.error(f"Failed to extract values: {str(e)}")
+            raise EStatAPIError(f"Failed to extract values: {str(e)}") from e
+
+    def close(self) -> None:
+        """セッションをクローズする"""
+        self.session.close()
+        logger.info("EStatClient session closed")
+
+    def __enter__(self) -> "EStatClient":
+        """コンテキストマネージャーのエントリ"""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """コンテキストマネージャーのイグジット"""
+        self.close()

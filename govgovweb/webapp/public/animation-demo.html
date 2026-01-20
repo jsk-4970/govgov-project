@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animation Demo - govgovweb</title>
+  <style>
+    :root {
+      --medium-blue: #328DCA;
+      --light-blue: #6AD3DD;
+      --dark-blue: #003B71;
+      --text-black: #1A1A1A;
+      --background-white: #FFFFFF;
+      --border-gray: #E5E5E5;
+      --text-gray: #888888;
+    }
+
+    body {
+      background-color: var(--background-white);
+      color: var(--text-black);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Icon bounce animation */
+    @keyframes iconBounce {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+      25% {
+        transform: translateY(-8px) rotate(-5deg) scale(1.05);
+      }
+      50% {
+        transform: translateY(0) rotate(0deg) scale(1);
+      }
+      75% {
+        transform: translateY(-8px) rotate(5deg) scale(1.05);
+      }
+    }
+
+    .loading-icon-bounce {
+      animation: iconBounce 1.6s ease-in-out infinite;
+      display: inline-block;
+      transform-origin: center;
+      filter: drop-shadow(0 4px 8px rgba(43, 159, 217, 0.3));
+    }
+
+    /* Thinking dots animation */
+    @keyframes thinking {
+      0% {
+        transform: scale(0.4) translateY(0);
+        opacity: 0.3;
+      }
+      20% {
+        transform: scale(1.2) translateY(-8px);
+        opacity: 1;
+      }
+      40% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0.4) translateY(0);
+        opacity: 0.3;
+      }
+    }
+
+    .thinking-dot {
+      display: inline-block;
+      animation: thinking 1.8s ease-in-out infinite;
+      transform-origin: center;
+    }
+
+    .thinking-dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .thinking-dot:nth-child(2) {
+      animation-delay: 0.3s;
+    }
+
+    .thinking-dot:nth-child(3) {
+      animation-delay: 0.6s;
+    }
+
+    /* Message fade in */
+    @keyframes messageFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading-message-text {
+      display: inline-block;
+      animation: messageFadeIn 0.4s ease-out forwards;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .demo-box {
+      background: #F5F5F5;
+      padding: 30px;
+      borderRadius: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+
+    .loading-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .text-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .loading-text {
+      font-size: 1rem;
+      color: var(--text-black);
+      font-weight: 600;
+    }
+
+    .dots-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      height: 20px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #2B9FD9;
+      box-shadow: 0 0 8px rgba(43, 159, 217, 0.5);
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: var(--medium-blue);
+    }
+
+    .info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #E3F2FD;
+      border-radius: 12px;
+      border-left: 4px solid var(--medium-blue);
+    }
+
+    .info p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: var(--text-black);
+    }
+
+    .status {
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .message-cycle {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-gray);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>govgovweb Loading Animation Demo</h1>
+
+    <div class="demo-box">
+      <div class="loading-container">
+        <img
+          src="/govgov-icon.png"
+          alt="govgov"
+          class="loading-icon-bounce"
+          style="width: 56px; height: 56px;"
+        />
+        <div class="text-container">
+          <span id="loadingText" class="loading-text loading-message-text">
+            govgovが情報を取得しています
+          </span>
+          <div class="dots-container">
+            <div class="dot thinking-dot"></div>
+            <div class="dot thinking-dot"></div>
+            <div class="dot thinking-dot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <p><span class="status">✅</span> <strong>アイコンバウンスアニメーション:</strong> 上下に跳ねながら微妙に回転</p>
+      <p><span class="status">✅</span> <strong>ドットアニメーション:</strong> 3つのドットが順番に跳ねる</p>
+      <p><span class="status">✅</span> <strong>メッセージ切り替え:</strong> 2.5秒ごとにフェードイン</p>
+      <p class="message-cycle" id="messageInfo">メッセージ: 1/4</p>
+    </div>
+  </div>
+
+  <script>
+    const messages = [
+      'govgovが情報を取得しています',
+      'govgovがドキュメントを分析しています',
+      'govgovが回答を準備しています',
+      'govgovが情報源を確認しています'
+    ];
+
+    let currentIndex = 0;
+    const textElement = document.getElementById('loadingText');
+    const infoElement = document.getElementById('messageInfo');
+
+    setInterval(() => {
+      currentIndex = (currentIndex + 1) % messages.length;
+      // Remove and re-add animation class to restart animation
+      textElement.classList.remove('loading-message-text');
+      void textElement.offsetWidth; // Trigger reflow
+      textElement.classList.add('loading-message-text');
+      textElement.textContent = messages[currentIndex];
+      infoElement.textContent = `メッセージ: ${currentIndex + 1}/4`;
+    }, 2500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment variables (CRITICAL - NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files
+data/*.csv
+data/*.json
+data/*.pdf
+data/*.xlsx
+!data/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# Google Cloud (CRITICAL - NEVER COMMIT CREDENTIALS)
+*.json
+!config/*.example.json
+*-key.json
+service-account*.json
+credentials.json
+client_secret*.json
+google-credentials*.json
+application_default_credentials.json
+
+# GCP specific
+.gcloud/
+.config/gcloud/
+
+# API Keys and Secrets (CRITICAL)
+*_api_key*
+*_secret*
+*.pem
+*.key
+*.p12
+*.pfx
+.secret
+secrets/
+*.credentials
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Cloud Run
+.gcloudignore

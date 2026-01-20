@@ -1,0 +1,13 @@
+# Google Cloud Platform
+google-cloud-storage>=2.10.0
+google-cloud-secret-manager>=2.16.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Retry logic
+tenacity>=8.2.0
+
+# Web framework (for Cloud Run)
+flask>=3.0.0
+gunicorn>=21.2.0

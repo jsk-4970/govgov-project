@@ -1,0 +1,177 @@
+"""Google Cloud Storage アップローダー
+
+GCSへのファイルアップロード機能を提供します。
+"""
+
+import json
+import logging
+from io import BytesIO
+from typing import Any, Optional
+
+from google.cloud import storage
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+logger = logging.getLogger(__name__)
+
+
+class GCSUploadError(Exception):
+    """GCSアップロード関連のエラー"""
+
+    pass
+
+
+class GCSUploader:
+    """Google Cloud Storageへのアップローダー"""
+
+    def __init__(self, bucket_name: str) -> None:
+        """アップローダーを初期化する
+
+        Args:
+            bucket_name: GCSバケット名
+        """
+        self.bucket_name = bucket_name
+        self.client = storage.Client()
+        self.bucket = self.client.bucket(bucket_name)
+        logger.info(f"GCSUploader initialized for bucket: {bucket_name}")
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+    )
+    def upload_jsonl(
+        self,
+        data: list[dict[str, Any]],
+        destination_blob_name: str,
+        content_type: str = "application/jsonl",
+    ) -> None:
+        """JSONLデータをGCSにアップロードする
+
+        Args:
+            data: JSONLとして保存するデータのリスト
+            destination_blob_name: GCS内のファイルパス
+            content_type: コンテンツタイプ
+
+        Raises:
+            GCSUploadError: アップロードに失敗した場合
+        """
+        try:
+            # JSONLフォーマットに変換
+            jsonl_content = "\n".join(json.dumps(record, ensure_ascii=False) for record in data)
+            jsonl_bytes = jsonl_content.encode("utf-8")
+
+            # GCSにアップロード
+            blob = self.bucket.blob(destination_blob_name)
+            blob.upload_from_string(jsonl_bytes, content_type=content_type)
+
+            logger.info(
+                f"Successfully uploaded {len(data)} records to gs://{self.bucket_name}/{destination_blob_name}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Failed to upload to gs://{self.bucket_name}/{destination_blob_name}: {str(e)}"
+            )
+            raise GCSUploadError(f"Upload failed: {str(e)}") from e
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+    )
+    def upload_json(
+        self,
+        data: dict[str, Any],
+        destination_blob_name: str,
+        content_type: str = "application/json",
+    ) -> None:
+        """JSONデータをGCSにアップロードする
+
+        Args:
+            data: JSONとして保存するデータ
+            destination_blob_name: GCS内のファイルパス
+            content_type: コンテンツタイプ
+
+        Raises:
+            GCSUploadError: アップロードに失敗した場合
+        """
+        try:
+            json_content = json.dumps(data, ensure_ascii=False, indent=2)
+            json_bytes = json_content.encode("utf-8")
+
+            blob = self.bucket.blob(destination_blob_name)
+            blob.upload_from_string(json_bytes, content_type=content_type)
+
+            logger.info(
+                f"Successfully uploaded JSON to gs://{self.bucket_name}/{destination_blob_name}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Failed to upload to gs://{self.bucket_name}/{destination_blob_name}: {str(e)}"
+            )
+            raise GCSUploadError(f"Upload failed: {str(e)}") from e
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+    )
+    def upload_from_file(
+        self,
+        source_file_path: str,
+        destination_blob_name: str,
+        content_type: Optional[str] = None,
+    ) -> None:
+        """ローカルファイルをGCSにアップロードする
+
+        Args:
+            source_file_path: アップロードするローカルファイルパス
+            destination_blob_name: GCS内のファイルパス
+            content_type: コンテンツタイプ（省略時は自動判定）
+
+        Raises:
+            GCSUploadError: アップロードに失敗した場合
+        """
+        try:
+            blob = self.bucket.blob(destination_blob_name)
+
+            if content_type:
+                blob.upload_from_filename(source_file_path, content_type=content_type)
+            else:
+                blob.upload_from_filename(source_file_path)
+
+            logger.info(
+                f"Successfully uploaded file {source_file_path} to gs://{self.bucket_name}/{destination_blob_name}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Failed to upload file {source_file_path}: {str(e)}"
+            )
+            raise GCSUploadError(f"Upload failed: {str(e)}") from e
+
+    def blob_exists(self, blob_name: str) -> bool:
+        """GCS上にファイルが存在するかチェックする
+
+        Args:
+            blob_name: チェックするファイルパス
+
+        Returns:
+            ファイルが存在する場合True
+        """
+        blob = self.bucket.blob(blob_name)
+        exists = blob.exists()
+        logger.debug(f"Blob exists check: gs://{self.bucket_name}/{blob_name} = {exists}")
+        return exists
+
+    def list_blobs(self, prefix: str = "") -> list[str]:
+        """指定したプレフィックスのファイル一覧を取得する
+
+        Args:
+            prefix: ファイルパスのプレフィックス
+
+        Returns:
+            ファイルパスのリスト
+        """
+        blobs = self.client.list_blobs(self.bucket_name, prefix=prefix)
+        blob_names = [blob.name for blob in blobs]
+        logger.info(f"Found {len(blob_names)} blobs with prefix: {prefix}")
+        return blob_names
